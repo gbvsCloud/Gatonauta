@@ -316,7 +316,6 @@ void fase1(){
 			for(int i = 0; i < enemyQuantity; i++){
 				enemies[i].Draw();
 				enemies[i].Movement(ticks);
-				enemies[i].CheckCollision(player.x, player.y, 1, 1);
 				if(enemies[i].CheckCollision(player.x, player.y, 1, 1)){
 					player.x = display_width / 2 - 64;
 					player.y = display_heigth - 64;	
@@ -342,16 +341,9 @@ void fase1(){
 int main() {
 		
 	initwindow(display_width, display_heigth, "Gatonauta");
-	
-	
-
 		
 	setvisualpage(pg);
 	setactivepage(pg);
-	
-	
-	
-
 
 
 		
