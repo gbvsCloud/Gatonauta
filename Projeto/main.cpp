@@ -12,9 +12,9 @@
 #define key_A 65
 #define key_SPACE 32
 
-#define display_width 1408
+#define display_width 640
 #define display_heigth 960
-#define tilesize 32
+#define tilesize 64
 
 bool isMoving = false;
 int pg = 1;
@@ -309,8 +309,8 @@ Enemy AddEnemy(int speed, char *spriteAddress, int direction, int layer, int x){
 void fase1(){
 	
 	Player player;
-	player.x = display_width / 2 - 32;
-	player.y = display_heigth - 32;
+	player.x = display_width / 2 - tilesize;
+	player.y = display_heigth - tilesize;
 	
 	int enemyQuantity = 17;
 	int enemyAdded = 0;
@@ -319,7 +319,7 @@ void fase1(){
 	void *grass = LoadSprite("grass.jpg", 32, 32, tilesize / 32);
 	void *water = LoadSprite("water.jpg", 32, 32, tilesize / 32);	
 	void *tiles[2] = {grass, water};
-	int  tileset[display_heigth / tilesize] = {0, 1, 1, 1, 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int  tileset[display_heigth / tilesize] = {0, 1, 1, 1, 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0};//, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	
 	unsigned long tickCount;
 	unsigned long initTick;
@@ -408,6 +408,10 @@ void fase1(){
 		
 		
 	}
+	
+	free(water);
+	free(grass);
+	free(enemies);
 
 }
 	
