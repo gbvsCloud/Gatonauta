@@ -28,7 +28,7 @@ enum gamestate{
 }gamestate;
 
 
-void* LoadSprite(char* address, int width, int heigth, double scale = 1){
+void* LoadSprite(const char* address, int width, int heigth, double scale = 1){
 	void *image;
 	//Cria um ponteiro do tipo void para armazenar a imagem
 	if(scale <= 1){		
@@ -39,7 +39,7 @@ void* LoadSprite(char* address, int width, int heigth, double scale = 1){
 		//imprime a imagem na tela com base na resolução base
 		readimagefile(address, 0, 0, width - 1, heigth - 1);
 		//recorta parte da tela e insere no ponteiro
-		getimage(0, 0, width * scale - 1, heigth * scale - 1, image);
+		getimage(0, 0, width - 1, heigth - 1, image);
 		//limpa a tela
 		cleardevice();
 	}else{
@@ -176,12 +176,12 @@ struct Player{
 					RemoveFirstMove();					
 					break;*/
 				case('a'):
-					x -= tilesize;
+					if(x > 0 + tilesize/32) x -= tilesize;
 					movesPending--;
 					RemoveFirstMove();					
 					break;
 				case('d'):
-					x += tilesize;
+					if(x < display_width - tilesize) x += tilesize;
 					movesPending--;
 					RemoveFirstMove();					
 					break;
@@ -202,7 +202,7 @@ struct Meteor{
 	int direction;
 
 	
-	Meteor(int _speed, char *_spriteAddress, int _direction = 0, int _layer = 0, int _x = 0){
+	Meteor(int _speed, const char *_spriteAddress, int _direction = 0, int _layer = 0, int _x = 0){
 		tick = 0;
 		x = _x * 64;
 		y = _layer * 64;
@@ -292,20 +292,23 @@ struct Enemy{
 	
 	int speed;
 	void *sprite;
+	void *mask;
 	int direction;
 
 	
-	Enemy(int _speed, char *_spriteAddress, int _direction = 0, int _layer = 0, int _x = 0){
+	Enemy(int _speed, char *_spriteAddress, char *_maskAddress, int _direction = 0, int _layer = 0, int _x = 0){
 		tick = 0;
 		x = _x * tilesize;
 		y = _layer * tilesize;
 		speed = _speed;
 		sprite = LoadSprite(_spriteAddress, 32, 32, tilesize/32);
+		mask = LoadSprite(_maskAddress, 32, 32, tilesize/32);
 		direction = _direction;	
 	}
 	
 	void Draw(){
-		putimage(x, y, sprite, COPY_PUT);
+		putimage(x, y, mask, AND_PUT);
+		putimage(x, y, sprite, OR_PUT);
 	}
 	
 	void Movement(int tick){
@@ -372,8 +375,8 @@ void RenderTilemap(void* tiles[], int tileset[]){
 	currentLine = 0;
 }*/
 
-Enemy AddEnemy(int speed, char *spriteAddress, int direction, int layer, int x){
-	Enemy enemy(speed, spriteAddress, direction, layer, x);
+Enemy AddEnemy(int speed, char *spriteAddress, char *maskAddress, int direction, int layer, int x){
+	Enemy enemy(speed, spriteAddress, maskAddress, direction, layer, x);
 	return enemy;
 }
 
@@ -390,7 +393,7 @@ void fase1(){
 	player.y = display_heigth - tilesize * 2;
 	
 	void *map;
-	map = LoadSprite("map2.jpg", 1024, 960, 1);
+	map = LoadSprite("quarto3.bmp", 1024, 960, 1);
 	int enemyQuantity = 16;
 	int enemyAdded = 0;
 	
@@ -412,7 +415,7 @@ void fase1(){
 	
 	int timer = 60;
 	
-	
+	 
 	initTick = GetTickCount();
 	
 	meteors[meteorAdded] = AddMeteor(1, "log.bmp", -1, 2, 0);
@@ -429,29 +432,29 @@ void fase1(){
 	
 	
 	for(int i =0; i < 4; i++){
-		enemies[enemyAdded] = AddEnemy(6, "car.jpg", 0, 8, i);
+		enemies[enemyAdded] = AddEnemy(6, "car.bmp", "carmask.bmp", 0, 8, i);
 		enemyAdded++;
 	}		
 	for(int i =0; i < 4; i++){
-		enemies[enemyAdded] = AddEnemy(6, "car.jpg", 0, 9, i+8);
+		enemies[enemyAdded] = AddEnemy(6, "car.jpg", "carmask.jpg", 0, 9, i+8);
 		enemyAdded++;
 	}	
 	for(int i =0; i < 2; i++){
-		enemies[enemyAdded] = AddEnemy(5, "car.jpg", 0, 10, i+2);
+		enemies[enemyAdded] = AddEnemy(5, "car.jpg", "carmask.jpg", 0, 10, i+2);
 		enemyAdded++;
 	}	
 	for(int i =0; i < 2; i++){
-		enemies[enemyAdded] = AddEnemy(5, "car.jpg", 0, 11, i+10);
+		enemies[enemyAdded] = AddEnemy(5, "car.jpg", "carmask.jpg", 0, 11, i+10);
 		enemyAdded++;
 	}		
 	
 	for(int i =0; i < 2; i++){
-		enemies[enemyAdded] = AddEnemy(4, "car.jpg", 0, 12, i);
+		enemies[enemyAdded] = AddEnemy(4, "car.jpg", "carmask.jpg", 0, 12, i);
 		enemyAdded++;
 	}
 		
 	for(int i =0; i < 2; i++){
-		enemies[enemyAdded] = AddEnemy(4, "car.jpg", 0, 8, i+15);
+		enemies[enemyAdded] = AddEnemy(4, "car.jpg", "carmask.jpg", 0, 8, i+15);
 		enemyAdded++;
 	}
 		
