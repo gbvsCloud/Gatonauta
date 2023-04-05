@@ -1,6 +1,6 @@
 [Project]
-FileName=main.dev
-Name=main
+FileName=Gatonauta.dev
+Name=Gatonauta
 Type=1
 Ver=2
 ObjFiles=
@@ -11,7 +11,7 @@ ResourceIncludes=
 MakeIncludes=
 Compiler=
 CppCompiler=
-Linker=-lbgi_@@_-lgdi32_@@_-lcomdlg32_@@_-luuid_@@_-loleaut32_@@_-lole32_@@__@@_
+Linker=
 IsCpp=1
 Icon=
 ExeOutput=
@@ -19,7 +19,7 @@ ObjectOutput=
 LogOutput=
 LogOutputEnabled=0
 OverrideOutput=0
-OverrideOutputName=main.exe
+OverrideOutputName=
 HostApplication=
 UseCustomMakefile=0
 CustomMakefile=
@@ -27,9 +27,9 @@ CommandLine=
 Folders=
 IncludeVersionInfo=0
 SupportXPThemes=0
-CompilerSet=4
-CompilerSettings=0000000100000000001000000
-UnitCount=2
+CompilerSet=6
+CompilerSettings=0000000000000000000000000
+UnitCount=1
 
 [VersionInfo]
 Major=1
@@ -39,29 +39,20 @@ Build=0
 LanguageID=1033
 CharsetID=1252
 CompanyName=
-FileVersion=1.0.0.0
+FileVersion=
 FileDescription=Developed using the Dev-C++ IDE
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=
-ProductVersion=1.0.0.0
+ProductVersion=
 AutoIncBuildNr=0
 SyncProduct=1
 
 [Unit1]
 FileName=main.cpp
 CompileCpp=1
-Folder=
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit2]
-FileName=Untitled1
 Folder=
 Compile=1
 Link=1

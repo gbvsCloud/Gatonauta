@@ -1,2 +1,0 @@
-# Gatonauta
- Projeto Gatonauta
