@@ -28,6 +28,9 @@ enum Gamestate{
 	Level1,
 	Level2,
 	Level3,
+	Level4,
+	Level5,
+	Level6,
 	Dead,
 	Win,
 	Infinite
@@ -46,9 +49,6 @@ bool onMeteor = true;
 int score = 0;
 int life = 3;
 //
-
-
-
 
 //SCORE DISPLAY
 void *scoreText;
@@ -72,6 +72,18 @@ void** playerMask;
 void* GreenLeftImage;
 void* GreenRightImage;
 
+void* OrangeLeftImage;
+void* OrangeRightImage;
+
+void* PurpleLeftImage;
+void* PurpleRightImage;
+
+void* SmallMeteorImage;
+void* GreatMeteorImage;
+
+void* SmallMeteorMask;
+void* GreatMeteorMask;
+
 void* AlienLeftMask;
 void* AlienRightMask;
 
@@ -83,7 +95,7 @@ void* buttonPressedMask;
 void* catImage;
 
 int alienQuantity;
-
+int meteorQuantity;
 
 int buttonQuantity;
 int buttonPressedQnt = 0;
@@ -137,7 +149,10 @@ struct Meteor{
 	int xSize;
 	int ySize;
 	void* sprite;
+	void* mask;
 };
+
+Meteor* meteors;
 
 void* LoadSprite(const char* spriteAddress, int spriteWidth, int spriteHeight, int scale = 1, int init_width = 0, int init_height = 0,
 	int final_width = tilesize, int final_height = tilesize){	
@@ -223,6 +238,10 @@ Meteor AddMeteor(int x, int y, int direction, int speed, void* sprite, int xSize
 	meteor.direction = direction;
 	meteor.speed = speed;
 	meteor.sprite = sprite;
+	if(xSize == 1)
+		meteor.mask = SmallMeteorMask;
+	else
+		meteor.mask = GreatMeteorMask;
 	meteor.xSize = xSize;
 	meteor.ySize = ySize;
 	
@@ -272,8 +291,8 @@ void RemoveFirstMove(){
 }
 
 void PlayerInput(){
-	//gerencia a fila de inputs para caso o jogador aperta muitas teclas em um curto periodo de tempo todas ainda sim sejam computadas
-	if(movesPending < 41){
+	//gerencia a fila de inputs para caso o jogador apertez muitas teclas em um curto periodo de tempo todas ainda sim sejam computadas
+	if(movesPending < 10){
 		if(GetKeyState(key_W) & 0x80 && !wPress){
 			playerMoves[movesPending] = 'w';
 			wPress = true;
@@ -318,9 +337,7 @@ void PlayerMovement(){
 				activeSprite = 0;
 				playerY -= tilesize;
 				movesPending--;
-				RemoveFirstMove();	
-				
-				//score += 10;				
+				RemoveFirstMove();				
 				break;				
 			case('a'):
 				activeSprite = 2;
@@ -334,8 +351,7 @@ void PlayerMovement(){
 				if(playerY < display_height - tilesize)playerY += tilesize;
 				movesPending--;
 				RemoveFirstMove();	
-				
-				//score += 10;				
+							
 				break;		
 			
 			case('d'):
@@ -457,6 +473,132 @@ char* convertIntegerToChar(int N)
     return (char*)arr;
 }
 
+void MeteorLevel(){
+	
+	unsigned long tickCount;
+	unsigned long initTick;
+	
+	initTick = GetTickCount();
+	
+	int cicleCounter = 0;
+	
+	buttonPressedQnt = 0;
+	
+	Cat cat = AddCat(6, 1, catImage);
+
+	int tileset[7] = {0, 1, 1, 1, 1, 1, 1};	
+	
+	int seconds = 30;
+	gameplayTimer[0] = 3;
+	gameplayTimer[1] = 0;
+	
+	
+	while(true){
+		tickCount = GetTickCount();
+		if(initTick - tickCount > 1000/60){
+			initTick = tickCount;
+			cicleCounter++;
+			SwitchPage();
+			putimage(0, 0, floorBackground, COPY_PUT);
+			
+			
+			if(life <= 0 || (gameplayTimer[0] <= 0 && gameplayTimer[1] <= 0)){
+				gs = Dead;
+				break;
+			}
+			
+			
+			//TIMER VISUAL
+			putimage(display_width / 2-128, 0, numbers[gameplayTimer[0]], COPY_PUT);
+			putimage(display_width / 2, 0, numbers[gameplayTimer[1]], COPY_PUT);
+			
+			if(tileset[playerY / 128] == 1)
+				onMeteor = false;
+			
+			DrawnSprite(cat.x, cat.y, cat.sprite, NULL, 0);
+			//PASSAR DE FASE
+			if(CheckCollision(cat.x, cat.y, 1, 1)){
+				gs = (Gamestate)((int)gs + 1);
+				score += seconds * 15;
+				break;
+				
+			};
+			
+			for(int i =0; i < meteorQuantity; i++){
+				
+				if(cicleCounter % (60 / meteors[i].speed) == 0){
+					meteors[i].x += tilesize * meteors[i].direction;
+					if(meteors[i].direction == 1){
+						if(CheckCollision(meteors[i].x - tilesize, meteors[i].y, meteors[i].xSize, meteors[i].ySize))
+							playerX += tilesize * meteors[i].direction;
+					}else{
+						if(CheckCollision(meteors[i].x + tilesize, meteors[i].y, meteors[i].xSize, meteors[i].ySize))
+							playerX += tilesize * meteors[i].direction;
+					}
+					
+					
+				} 
+				DrawnSprite(meteors[i].x, meteors[i].y, meteors[i].sprite, meteors[i].mask, 1);
+				if(CheckCollision(meteors[i].x, meteors[i].y, meteors[i].xSize, meteors[i].ySize)) onMeteor = true;
+				
+				if(meteors[i].x <= 0 + 16 - (meteors[i].xSize) * 128 || meteors[i].x >= display_width - 16){
+					if(meteors[i].direction == 1)
+						meteors[i].x = 0 + 8;
+					else
+						meteors[i].x = display_width - 8 - meteors[i].xSize * 128;
+				}	
+			}
+			
+				
+			PlayerInput();
+			PlayerMovement();	
+			
+			DrawnSprite(playerX, playerY, playerSheet[activeSprite], playerMask[activeSprite], 1);
+					
+			char* scoreArr = convertIntegerToChar(score);
+			nDigits = floor(log10(abs(score))) + 1;
+			if(score > 0){
+				for(int i = 0; i < nDigits; i++)
+					DrawnSprite(i * 128, 128, numbers[(scoreArr[i] - '0')], NULL, 0);
+			}		
+			
+			
+			DrawnSprite(0, 0, scoreText, NULL, 0);
+			
+			if(IsPressing(key_ESCAPE)){
+				playing = false;
+				gs = MainMenu;
+			};
+			
+			if(!onMeteor){
+				PlayerReturn();
+				onMeteor = true;
+			} 
+			
+			if(buttonPressedQnt >= buttonQuantity){
+				cat.unlocked = true;
+			}
+			
+			
+			
+			setactivepage(pg);
+			if(cicleCounter >= 60){
+				seconds--;
+				cicleCounter = 0;
+				
+					if(gameplayTimer[1] != 0 || gameplayTimer[0])gameplayTimer[1]--;
+					if(gameplayTimer[1] <= -1){
+						if(gameplayTimer[0] > 0) gameplayTimer[0]--;
+						gameplayTimer[1] = 9;
+					}
+			
+				
+			} 
+		}
+	}
+	PlayerReturn();
+}
+
 void AlienLevel(){
 	
 	unsigned long tickCount;
@@ -466,7 +608,7 @@ void AlienLevel(){
 	
 	int cicleCounter = 0;
 	
-	
+	buttonPressedQnt = 0;
 	
 	Cat cat = AddCat(6, 1, catImage);
 
@@ -605,15 +747,26 @@ int main(){
 	alienQuantity = 4;
 	GreenLeftImage = LoadSprite("GreenLeft.bmp", 128, 128, 1);
 	GreenRightImage = LoadSprite("GreenRight.bmp", 128, 128, 1);
+	
+	OrangeLeftImage = LoadSprite("OrangeLeft.bmp", 128, 128, 1);
+	OrangeRightImage = LoadSprite("OrangeRight.bmp", 128, 128, 1);	
+	
+	PurpleLeftImage = LoadSprite("PurpleLeft.bmp", 128, 128, 1);
+	PurpleRightImage = LoadSprite("PurpleRight.bmp", 128, 128, 1);	
+	
 	AlienLeftMask = LoadSprite("AlienLeftMask.bmp", 128, 128, 1);
 	AlienRightMask = LoadSprite("AlienRightMask.bmp", 128, 128, 1);
+	
+	SmallMeteorImage = LoadSprite("SmallMeteor.bmp", 128, 128, 1);
+	SmallMeteorMask = LoadSprite("SmallMeteorMask.bmp", 128, 128, 1);
+	
+	GreatMeteorImage = LoadSprite("GreatMeteor.bmp", 256, 128, 1, 0, 0, 256, 128);
+	GreatMeteorMask = LoadSprite("GreatMeteorMask.bmp", 256, 128, 1, 0, 0, 256, 128);
 	
 	buttonImage = LoadSprite("Button.bmp", 128, 128);
 	buttonImageMask = LoadSprite("ButtonMask.bmp", 128, 128);
 	buttonPressedImage = LoadSprite("ButtonPressed.bmp", 128, 128);
 	buttonPressedMask = LoadSprite("ButtonPressedMask.bmp", 128, 128);
-	
-	
 	
 	catImage = LoadSprite("gato.jpg", 128, 128);
 	floorBackground = LoadSprite("fundo.bmp", 1680, 1050, 1, 0, 0, 1680, 1050);
@@ -632,9 +785,9 @@ int main(){
 				aliens = (Alien *) realloc(aliens, sizeof(Alien) * alienQuantity);
 				
 				aliens[0] = AddAlien(0, 5, 1, 2, GreenRightImage, 1, 1);
-				aliens[1] = AddAlien(13, 2, -1, 3, GreenLeftImage, 1, 1);
+				aliens[1] = AddAlien(13, 2, -1, 3, OrangeLeftImage, 1, 1);
 				aliens[2] = AddAlien(0, 4, 1, 5, GreenRightImage, 1, 1);
-				aliens[3] = AddAlien(13, 6, -1, 4, GreenLeftImage, 1, 1);
+				aliens[3] = AddAlien(13, 6, -1, 4, PurpleLeftImage, 1, 1);
 				//
 				
 				//BUTTONS CONFING 
@@ -690,6 +843,37 @@ int main(){
 				
 				AlienLevel();
 				break;
+			case (Level4):
+				
+				//ALIENS CONFIG		
+				
+				meteorQuantity = 12;													
+				meteors = NULL;	
+				meteors = (Meteor *) realloc(meteors, sizeof(Meteor) * meteorQuantity);
+				//QUANTO MENOR O NUMERO Y DO OBJETO MAIS ALTO ELE ESTÁ
+				
+				meteors[0] = AddMeteor(0, 5, 1, 2, SmallMeteorImage, 1, 1);
+				meteors[1] = AddMeteor(8, 5, 1, 2, GreatMeteorImage, 2, 1);
+				
+				meteors[2] = AddMeteor(3, 4, 1, 3, SmallMeteorImage, 1, 1);
+				meteors[3] = AddMeteor(0, 4, 1, 3, SmallMeteorImage, 1, 1);
+				
+				meteors[4] = AddMeteor(13, 2, -1, 2, SmallMeteorImage, 1, 1);				
+				meteors[5] = AddMeteor(3, 2, -1, 2, GreatMeteorImage, 2, 1);
+				meteors[6] = AddMeteor(6, 2, -1, 2, SmallMeteorImage, 1, 1);
+				meteors[7] = AddMeteor(10, 2, -1, 2, SmallMeteorImage, 1, 1);
+				
+				meteors[8] = AddMeteor(13, 3, -1, 3, SmallMeteorImage, 1, 1);
+				meteors[9] = AddMeteor(3, 3, -1, 3, SmallMeteorImage, 1, 1);
+				
+				meteors[10] = AddMeteor(5, 6, -1, 2, SmallMeteorImage, 1, 1);
+				meteors[11] = AddMeteor(7, 6, -1, 2, SmallMeteorImage, 1, 1);
+				//
+				
+				
+				
+				MeteorLevel();
+				break;
 			case(Dead):
 				break;
 			case(Infinite):
@@ -697,10 +881,10 @@ int main(){
 				aliens = NULL;	
 				aliens = (Alien *) realloc(aliens, sizeof(Alien) * alienQuantity);
 				
-				aliens[0] = AddAlien(0, 5, 1, 2, GreenLeftImage, 1, 1);
-				aliens[1] = AddAlien(13, 2, -1, 3, GreenLeftImage, 1, 1);
-				aliens[2] = AddAlien(0, 4, 1, 5, GreenLeftImage, 1, 1);
-				aliens[3] = AddAlien(13, 6, 1, 4, GreenLeftImage, 1, 1);
+				aliens[0] = AddAlien(0, 5, 1, 2, SmallMeteorImage, 1, 1);
+				aliens[1] = AddAlien(13, 2, -1, 3, SmallMeteorImage, 1, 1);
+				aliens[2] = AddAlien(0, 4, 1, 5, SmallMeteorImage, 1, 1);
+				aliens[3] = AddAlien(13, 6, 1, 4, SmallMeteorImage, 1, 1);
 				//
 				
 				//BUTTONS CONFING 
