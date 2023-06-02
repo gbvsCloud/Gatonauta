@@ -32,7 +32,6 @@ enum Gamestate{
 	Level3,
 	Level4,
 	Level5,
-	Level6,
 	Win,
 	Dead,	
 	Infinite
@@ -61,6 +60,8 @@ int life = 7;
 
 //SCORE DISPLAY
 void *scoreText;
+void *scoreMask;
+
 int nDigits = 0;
 int nDigitsCheck;
 //
@@ -109,6 +110,7 @@ void* buttonPressedImage;
 void* buttonPressedMask;
 
 void* catImage;
+void* catMask;
 
 int alienQuantity;
 int meteorQuantity;
@@ -185,6 +187,19 @@ void* LoadSprite(const char* spriteAddress, int spriteWidth, int spriteHeight, i
 
 	cleardevice();	
 	return image;
+}
+
+void MeowSound(){
+	int x = rand() % 2;
+	
+	if(x == 0){
+		mciSendString("seek gato1 to start", NULL, 0, 0);
+		mciSendString("play gato1", NULL, 0, 0);
+	}else{
+		mciSendString("seek gato2 to start", NULL, 0, 0);
+		mciSendString("play gato2", NULL, 0, 0);
+	}	
+	
 }
 
 void** LoadSpriteSheet(int spriteQuantity, const char* spriteAddress, int spriteWidth, int spriteHeight){	
@@ -411,6 +426,8 @@ void MainMenuState(){
 	while(gs == MainMenu){
 		SwitchPage();
 		
+		
+		life = 7;
 		spacePress = IsPressing(VK_SPACE);
 		
 		if (GetCursorPos(&P));
@@ -428,7 +445,13 @@ void MainMenuState(){
 		if(P.x > display_width / 2 - 250 && P.x < (display_width / 2 + 250)){
 			//checagem de sobreposição do mouse sobre o botão jogar
 			if(P.y > display_height - 250 && P.y < display_height - 145){
-				if(GetKeyState(VK_LBUTTON)&0x80)gs = Level1;
+				if(GetKeyState(VK_LBUTTON)&0x80){
+					mciSendString("stop menu", NULL, 0, 0);
+					mciSendString("seek happy to start", NULL, 0, 0);
+					mciSendString("play happy repeat", NULL, 0, 0);
+					
+					gs = Level1;
+				}
 			}else if(P.y > display_height - 125 - 30 && P.y < display_height){
 				if(GetKeyState(VK_LBUTTON)&0x80){
 					playing = false;
@@ -558,6 +581,7 @@ void MeteorLevel(){
 			
 			if(life <= 0 || (gameplayTimer[0] <= 0 && gameplayTimer[1] <= 0)){
 				gs = Dead;
+				
 				break;
 			}
 			
@@ -570,11 +594,12 @@ void MeteorLevel(){
 			if(tileset[playerY / 128] == 1)
 				onMeteor = false;
 			
-			DrawnSprite(cat.x, cat.y, cat.sprite, NULL, 0);
+			DrawnSprite(cat.x, cat.y, cat.sprite, catMask, 1);
 			//PASSAR DE FASE
 			if(CheckCollision(cat.x, cat.y, 1, 1)){
 				gs = (Gamestate)((int)gs + 1);
 				score += seconds * 15;
+				MeowSound();
 				break;
 				
 			};
@@ -618,7 +643,7 @@ void MeteorLevel(){
 			}		
 			
 			
-			DrawnSprite(0, 0, scoreText, NULL, 0);
+			DrawnSprite(0, 0, scoreText, scoreMask, 1);
 			
 			if(IsPressing(key_ESCAPE)){
 				playing = false;
@@ -653,6 +678,7 @@ void MeteorLevel(){
 	}
 	PlayerReturn();
 }
+
 
 void AlienLevel(){
 	
@@ -698,11 +724,12 @@ void AlienLevel(){
 			if(tileset[playerY / 128] == 1)
 				onMeteor = false;
 			
-			DrawnSprite(cat.x, cat.y, cat.sprite, NULL, 0);
+			DrawnSprite(cat.x, cat.y, cat.sprite, catMask, 1);
 			//PASSAR DE FASE
 			if(CheckCollision(cat.x, cat.y, 1, 1) && cat.unlocked){
 				gs = (Gamestate)((int)gs + 1);
 				score += seconds * 15;
+				MeowSound();
 				break;
 				
 			};
@@ -714,7 +741,8 @@ void AlienLevel(){
 				if(CheckCollision(buttons[i].x + 8, buttons[i].y, 1, 1) && !buttons[i].isPressed){
 					buttons[i].isPressed = true;
 					score += 10;
-					buttonPressedQnt++;				
+					buttonPressedQnt++;		
+					MeowSound();		
 				}
 							
 			}
@@ -749,7 +777,7 @@ void AlienLevel(){
 			}		
 			
 			
-			DrawnSprite(0, 0, scoreText, NULL, 0);
+			DrawnSprite(0, 0, scoreText, scoreMask, 1);
 			
 			if(IsPressing(key_ESCAPE)){
 				playing = false;
@@ -790,12 +818,7 @@ void AlienLevel(){
 int main(){
 	
 	initwindow(display_width, display_height, "");
-	
-	mciSendString("open .\\Musica\\HappyCat.mp3 type MPEGVideo alias happycat", NULL, 0, 0); 
-	
-	waveOutSetVolume(0,0x88888888);
-	
-	mciSendString("play happycat repeat", NULL, 0, 0);
+
 	playerSheet = LoadSpriteSheet(4, ".\\Sprites\\gato.bmp", 512, 128);
 	playerMask = LoadSpriteSheet(4,".\\Sprites\\gatoMask.bmp", 512, 128);
 	
@@ -830,14 +853,27 @@ int main(){
 	buttonPressedImage = LoadSprite(".\\Sprites\\ButtonPressed.bmp", 128, 128);
 	buttonPressedMask = LoadSprite(".\\Sprites\\ButtonPressedMask.bmp", 128, 128);
 	
-	catImage = LoadSprite(".\\Sprites\\gato.jpg", 128, 128);
+	catImage = LoadSprite(".\\Sprites\\cat.bmp", 192, 128, 1, 0, 0, 192, 128);
+	catMask = LoadSprite(".\\Sprites\\catMask.bmp", 192, 128, 1, 0, 0, 192, 128);
 	floorBackground = LoadSprite(".\\Sprites\\background.bmp", 1680, 1050, 1, 0, 0, 1680-1, 1050-1);
 	spaceBackground = LoadSprite(".\\Sprites\\spacenebula.bmp", 1680, 1050, 1, 0, 0, 1680-1, 1050-1);
 	loseScreen = LoadSprite(".\\Sprites\\loseScreen.bmp", 1680, 1050, 1, 0, 0, 1680-1, 1050-1);
+	victoryScreen = LoadSprite(".\\Sprites\\victoryScreen.bmp", 1680, 1050, 1, 0, 0, 1680-1, 1050-1);
 	scoreText = LoadSprite(".\\Sprites\\score.bmp", 256, 128, 1, 0, 0, 256, 128);
+	scoreMask = LoadSprite(".\\Sprites\\scoreMask.bmp", 256, 128, 1, 0, 0, 256, 128);
 	
 	playBtn = LoadSprite(".\\Sprites\\jogarBtn.bmp", 500, 125, 1, 0, 0, 500, 125);
 	exitBtn = LoadSprite(".\\Sprites\\exitBtn.bmp", 500, 125, 1, 0, 0, 500, 125);
+	
+	waveOutSetVolume(0,0x01111111);
+	
+	mciSendString("open .\\Musica\\mainmenu.mp3 type MPEGVideo alias menu", NULL, 0, 0); 
+	mciSendString("open .\\Musica\\happycat.mp3 type MPEGVideo alias happy", NULL, 0, 0);
+	mciSendString("open .\\Musica\\gatinho1.mp3 type MPEGVideo alias gato1", NULL, 0, 0);
+	mciSendString("open .\\Musica\\gatinho2.mp3 type MPEGVideo alias gato2", NULL, 0, 0);
+	
+	mciSendString("seek menu to start", NULL, 0, 0);
+	mciSendString("play menu repeat", NULL, 0, 0);
 	
 	while(playing){
 		SwitchPage();			
@@ -929,7 +965,6 @@ int main(){
 				break;
 			case (Level5):
 				
-				//ALIENS CONFIG		
 				
 				meteorQuantity = 22;													
 				meteors = NULL;	
@@ -1007,32 +1042,21 @@ int main(){
 				DrawnSprite(0, 0, loseScreen, NULL, 0);
 				if(GetKeyState(VK_SPACE) & 0x80){
 					gs = MainMenu;
-					
+					mciSendString("stop happy", NULL, 0, 0);
+					mciSendString("seek happy to start", NULL, 0, 0);
+					mciSendString("seek menu to start", NULL, 0, 0);
+					mciSendString("play menu repeat", NULL, 0, 0);
 				}
 				break;
 			case(Win):
-				break;
-			case(Infinite):
-				//ALIENS CONFIG															
-				aliens = NULL;	
-				aliens = (Alien *) realloc(aliens, sizeof(Alien) * alienQuantity);
-				
-				aliens[0] = AddAlien(0, 5, 1, 2, SmallMeteorImage, 1, 1);
-				aliens[1] = AddAlien(13, 2, -1, 3, SmallMeteorImage, 1, 1);
-				aliens[2] = AddAlien(0, 4, 1, 5, SmallMeteorImage, 1, 1);
-				aliens[3] = AddAlien(13, 6, 1, 4, SmallMeteorImage, 1, 1);
-				//
-				
-				//BUTTONS CONFING 
-				buttonQuantity = 3;	
-				buttons = NULL;
-				buttons = (Button *) realloc(buttons, sizeof(Button) * buttonQuantity);
-				for(int i = 0; i < buttonQuantity; i++)
-					buttons[i] = AddButton(buttonImage, buttonPressedImage, buttonImageMask, buttonPressedMask);
-				
-				//
-				
-				
+				DrawnSprite(0, 0, victoryScreen, NULL, 0);
+				if(GetKeyState(VK_SPACE) & 0x80){
+					gs = MainMenu;		
+					mciSendString("stop happy", NULL, 0, 0);
+					mciSendString("seek happy to start", NULL, 0, 0);	
+					mciSendString("seek menu to start", NULL, 0, 0);
+					mciSendString("play menu repeat", NULL, 0, 0);		
+				}
 				break;
 		}
 					
@@ -1061,6 +1085,7 @@ int main(){
 	free(spaceBackground);
 	free(loseScreen);
 	free(scoreText);
+	free(scoreMask);
 	free(aliens);
 	free(meteors);
 	free(numbers);
